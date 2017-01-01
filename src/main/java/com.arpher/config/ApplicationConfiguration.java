@@ -1,7 +1,9 @@
 package com.arpher.config;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.arpher.filter.TestFilter;
 import org.springframework.boot.bind.RelaxedPropertyResolver;
+import org.springframework.boot.context.embedded.FilterRegistrationBean;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
@@ -11,22 +13,27 @@ import org.springframework.orm.hibernate4.HibernateTransactionManager;
 import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.util.StringUtils;
+
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Properties;
+
 @Configuration
 @EnableTransactionManagement
-public class DatabaseConfiguration implements EnvironmentAware {
+public class ApplicationConfiguration implements EnvironmentAware {
+
     private Environment environment;
     private RelaxedPropertyResolver datasourcePropertyResolver;
-    //从application.yml中读取资源
+
+    //从application.yml中读取资源(数据库的参数)
     @Override
     public void setEnvironment(Environment environment) {
         this.environment = environment;
         this.datasourcePropertyResolver = new RelaxedPropertyResolver(environment,
                 "spring.datasource.");
     }
+
     //datasource
     @Bean(initMethod = "init", destroyMethod = "close")
     public DataSource dataSource() throws SQLException {
@@ -46,8 +53,11 @@ public class DatabaseConfiguration implements EnvironmentAware {
         druidDataSource.setInitialSize(1);
         druidDataSource.setMinIdle(1);
         druidDataSource.setMaxActive(20);
+        // 获取连接等待超时的时间
         druidDataSource.setMaxWait(60000);
+        // 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
         druidDataSource.setTimeBetweenEvictionRunsMillis(60000);
+        // 配置一个连接在池中最小生存的时间，单位是毫秒
         druidDataSource.setMinEvictableIdleTimeMillis(300000);
         druidDataSource.setValidationQuery("SELECT　'x'");
         druidDataSource.setTestWhileIdle(true);
@@ -55,6 +65,7 @@ public class DatabaseConfiguration implements EnvironmentAware {
         druidDataSource.setTestOnReturn(false);
         return druidDataSource;
     }
+
     //sessionFactory
     @Bean
     public LocalSessionFactoryBean sessionFactory() throws SQLException{
@@ -67,6 +78,7 @@ public class DatabaseConfiguration implements EnvironmentAware {
         localSessionFactoryBean.setPackagesToScan("*");
         return localSessionFactoryBean;
     }
+
     //txManager事务开启
     @Bean
     public HibernateTransactionManager txManager() throws SQLException {
@@ -74,4 +86,16 @@ public class DatabaseConfiguration implements EnvironmentAware {
         hibernateTransactionManager.setSessionFactory(sessionFactory().getObject());
         return hibernateTransactionManager;
     }
+
+//    @Bean
+//    public FilterRegistrationBean testFilterRegistration() {
+//
+//        FilterRegistrationBean registration = new FilterRegistrationBean();
+//        registration.setFilter(new TestFilter());
+//        registration.addUrlPatterns("/*");
+//        registration.addInitParameter("paramName", "paramValue");
+//        registration.setName("testFilter");
+//        registration.setOrder(1);
+//        return registration;
+//    }
 }

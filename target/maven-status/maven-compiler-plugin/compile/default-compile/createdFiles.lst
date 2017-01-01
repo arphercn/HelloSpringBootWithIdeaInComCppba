@@ -1,3 +1,4 @@
-com\arpher\config\DatabaseConfiguration.class
 com\arpher\web\CommonAction.class
+com\arpher\config\ApplicationConfiguration.class
+com\arpher\filter\TestFilter.class
 com\arpher\Application.class
